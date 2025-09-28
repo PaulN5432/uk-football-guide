@@ -1,15 +1,15 @@
 /*
-scraper.js with team logos and channel logos
-- Scrapes UK schedule from LiveSoccerTV
-- Filters all UK teams (English + Scottish)
-- Includes team logos and channel logos
+scraper.js for GitHub Actions
+- Scrapes LiveSoccerTV UK schedule
+- Includes ALL English & Scottish teams
+- Includes team logos & channel logos
+- Compatible timeout for CI
 - Debug logging enabled
 */
 
 const puppeteer = require('puppeteer');
 const fs = require('fs-extra');
 
-// Full list of UK teams
 const UK_TEAMS = [
   // Premier League
   'Arsenal','Aston Villa','Bournemouth','Brentford','Brighton','Burnley','Chelsea',
@@ -52,6 +52,7 @@ const OUTPUT_FILE = 'matches.json';
   const page = await browser.newPage();
   await page.goto('https://www.livesoccertv.com/schedules/uk/', { waitUntil: 'networkidle2' });
 
+  // Fixed timeout for compatibility
   await new Promise(resolve => setTimeout(resolve, 2000));
 
   const matches = await page.evaluate((UK_TEAMS) => {
@@ -80,7 +81,6 @@ const OUTPUT_FILE = 'matches.json';
 
         if (!UK_TEAMS.includes(homeName) && !UK_TEAMS.includes(awayName)) return;
 
-        // Logos if present
         const homeLogo = homeTeamEl.querySelector('img')?.src || '';
         const awayLogo = awayTeamEl.querySelector('img')?.src || '';
 
