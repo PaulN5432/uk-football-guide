@@ -1,15 +1,7 @@
-/*
-scraper.js for GitHub Actions
-- Scrapes LiveSoccerTV UK schedule
-- Includes ALL English & Scottish teams
-- Includes team logos & channel logos
-- Compatible timeout for CI
-- Debug logging enabled
-*/
-
 const puppeteer = require('puppeteer');
 const fs = require('fs-extra');
 
+// Full list of UK teams (English & Scottish professional leagues)
 const UK_TEAMS = [
   // Premier League
   'Arsenal','Aston Villa','Bournemouth','Brentford','Brighton','Burnley','Chelsea',
@@ -57,50 +49,33 @@ const OUTPUT_FILE = 'matches.json';
 
   const matches = await page.evaluate((UK_TEAMS) => {
     const result = [];
-    const tables = document.querySelectorAll('table');
+    const matchRows = document.querySelectorAll('.match-row'); // Robust selector
 
-    tables.forEach(table => {
-      const dateHeader = table.previousElementSibling?.innerText.trim() || 'Unknown Date';
-      const rows = table.querySelectorAll('tbody tr');
+    matchRows.forEach(row => {
+      const date = row.querySelector('.match-date')?.innerText.trim();
+      const time = row.querySelector('.match-time')?.innerText.trim();
+      const homeTeam = row.querySelector('.team-home')?.innerText.trim();
+      const awayTeam = row.querySelector('.team-away')?.innerText.trim();
 
-      rows.forEach(r => {
-        const cells = r.querySelectorAll('td');
-        if (cells.length < 3) return;
+      if (!homeTeam || !awayTeam) return;
 
-        const time = cells[0]?.innerText.trim();
+      // Only include matches involving UK teams
+      if (!UK_TEAMS.includes(homeTeam) && !UK_TEAMS.includes(awayTeam)) return;
 
-        // Team names and logos
-        const teamCell = cells[1];
-        const homeTeamEl = teamCell.querySelector('.team-home, .team-left') || teamCell.querySelector('span:first-child');
-        const awayTeamEl = teamCell.querySelector('.team-away, .team-right') || teamCell.querySelector('span:last-child');
+      const homeLogo = row.querySelector('.team-home img')?.src || '';
+      const awayLogo = row.querySelector('.team-away img')?.src || '';
 
-        if (!homeTeamEl || !awayTeamEl) return;
+      const channels = Array.from(row.querySelectorAll('.broadcast-logo img')).map(img => ({
+        logo: img.src,
+        name: img.alt || 'Unknown Channel'
+      }));
 
-        const homeName = homeTeamEl.innerText.trim();
-        const awayName = awayTeamEl.innerText.trim();
-
-        if (!UK_TEAMS.includes(homeName) && !UK_TEAMS.includes(awayName)) return;
-
-        const homeLogo = homeTeamEl.querySelector('img')?.src || '';
-        const awayLogo = awayTeamEl.querySelector('img')?.src || '';
-
-        // Channels and logos
-        const channelsRaw = cells[2]?.innerHTML || '';
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(channelsRaw, 'text/html');
-        const channelEls = doc.querySelectorAll('a, span');
-        const channels = Array.from(channelEls).map(c => ({
-          name: c.innerText.trim(),
-          logo: c.querySelector('img')?.src || ''
-        })).filter(c => c.name);
-
-        result.push({
-          date: dateHeader,
-          time,
-          home: { name: homeName, logo: homeLogo },
-          away: { name: awayName, logo: awayLogo },
-          channels
-        });
+      result.push({
+        date,
+        time,
+        home: { name: homeTeam, logo: homeLogo },
+        away: { name: awayTeam, logo: awayLogo },
+        channels
       });
     });
 
