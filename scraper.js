@@ -52,7 +52,7 @@ const OUTPUT_FILE = 'matches.json';
   const page = await browser.newPage();
   await page.goto('https://www.livesoccertv.com/schedules/uk/', { waitUntil: 'networkidle2' });
 
-  await page.waitForTimeout(2000);
+  await new Promise(resolve => setTimeout(resolve, 2000));
 
   const matches = await page.evaluate((UK_TEAMS) => {
     const result = [];
