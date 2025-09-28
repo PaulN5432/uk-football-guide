@@ -1,27 +1,32 @@
-name: Scrape UK Football TV
+name: Scrape UK Football Matches
 
 on:
   schedule:
-    - cron: '0 0 * * *' # daily at midnight UTC
-  workflow_dispatch:
+    - cron: '0 1 * * 1' # every Monday at 01:00 UTC
+  workflow_dispatch: # allows manual run
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+
       - name: Install dependencies
         run: npm install
+
       - name: Run scraper
         run: npm run scrape
-      - name: Commit and push JSON
+
+      - name: Commit matches.json
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           git add matches.json
-          git commit -m "Update matches.json [skip ci]" || echo "No changes to commit"
+          git commit -m "Update matches.json" || echo "No changes to commit"
           git push
