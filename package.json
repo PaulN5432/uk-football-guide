@@ -1,0 +1,13 @@
+{
+  "name": "uk-football-tv-guide",
+  "version": "1.0.0",
+  "description": "GitHub scraper + JSON for UK football TV guide",
+  "main": "scraper.js",
+  "scripts": {
+    "scrape": "node scraper.js"
+  },
+  "dependencies": {
+    "puppeteer": "^23.0.0",
+    "fs-extra": "^11.0.0"
+  }
+}
